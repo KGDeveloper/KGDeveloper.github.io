@@ -1,3 +1,18 @@
+---
+layout:     post
+title:      NSObject 探索
+subtitle:   NSObject 探索以及面试题
+date:       2020-04-28
+author:     KG丿夏沫
+header-img: img/post-bg-ios9-web.jpg
+catalog: true
+tags:
+    - iOS
+    - ReactiveCocoa
+    - 函数式编程
+    - 开源框架
+---
+
 1.NSObject是OC中的最常用的类，所以从探索NSObject类开始，逐步深入学习iOS，了解OC。
 
 为了方便探索，直接上代码，然后一起研究，省略其他无关代码
