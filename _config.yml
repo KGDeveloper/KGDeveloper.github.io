@@ -92,10 +92,10 @@ service-worker: true
 # Friends
 friends: [
     {
-        title: "KG丿夏沫",
-        href: ""
+        title: "KG丿夏沫(GitHub)",
+        href: "https://github.com/KGDeveloper"
     },{
-        title: "KG丿夏沫",
+        title: "KG丿夏沫(简书)",
         href: "https://www.jianshu.com/u/3526afd857cb"
     },{
         title: "Apple",
