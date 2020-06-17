@@ -1,5 +1,5 @@
 ---
-layout:     Cocoapods
+layout:     post
 title:      Cocoapods私有库
 subtitle:   Cocoapods私有库
 date:       2020-06-17
@@ -26,7 +26,7 @@ tags:
 
 ## 开始进入正题，创建私有库
 
-    1、使用Cocoapods的模板创建私有库，打开终端，依次输入以下命令，中间不会报错，放心大胆的做吧！
+1、使用Cocoapods的模板创建私有库，打开终端，依次输入以下命令，中间不会报错，放心大胆的做吧！
 
     # 创建命令
     pod lib create ProjectName
@@ -107,3 +107,5 @@ tags:
  To learn more about the template see `https://github.com/CocoaPods/pod-template.git`.
  To learn more about creating a new pod, see `https://guides.cocoapods.org/making/making-a-cocoapod`.
  ```
+
+2、
