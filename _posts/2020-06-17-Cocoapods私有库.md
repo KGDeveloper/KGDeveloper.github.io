@@ -28,8 +28,9 @@ tags:
 
 1、使用Cocoapods的模板创建私有库，打开终端，依次输入以下命令，中间不会报错，放心大胆的做吧！
 
-    # 创建命令
+    # 创建命令（此处ProjectName就是你的私有库名称，后面要用到，取名最好严谨一些）
     pod lib create ProjectName
+
     # 选择编程语言
     What language do you want to use?? [ Swift / ObjC ]
     Objc  
@@ -108,4 +109,6 @@ tags:
  To learn more about creating a new pod, see `https://guides.cocoapods.org/making/making-a-cocoapod`.
  ```
 
-2、
+2、然后到你的Github['https://github.com/']，创建一个新的库，库名称就是前面创建的时候起的名称
+
+示例：<img src="../img/github_pods.png"  alt="Github创建公共库" />
