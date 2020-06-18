@@ -111,4 +111,4 @@ tags:
 
 2、然后到你的<a href="https://github.com/">Github</a>，创建一个新的库，库名称就是前面创建的时候起的名称
 
-示例：<img src="./img/github_pods.png"  alt="Github创建公共库" />
+示例：<img src="../img/github_pods.png"  alt="Github创建公共库" />
