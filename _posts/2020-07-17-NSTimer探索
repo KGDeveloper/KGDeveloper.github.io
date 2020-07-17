@@ -1,0 +1,222 @@
+# NSTimer使用方式探索
+
+## 一、概念：
+>NSTimer定时器，系统提供的一个类，用来处理定时操作。
+
+## 二、系统提供API探索
+
+>首先我们创建一个空工程，在工程ViewController里面创建一个成员变量```NSTimer *_timer```以供后续代码使用。NSTimer使用的时候，需要注意以下两点：
+>（1）、当定时器不再使用的时候，及时释放
+>（2）、使用定时器时，应当把定时器添加到RunLoop中
+>补充：NSRunLoop是我们APP能够进行各种事件响应和系统活动的关键，所以在此做下补充。
+>RunLoop有5中模式
+>--NSDefaultRunLoopMode，一般情况下RunLoop都是在这个Mode下进行，此Mode包含了除（NSConnection进程间通信）以外的所有输入源(Source);
+>--NSConnectionReplyMode，处理进程间通信使用，系统内部使用的
+>--NSModalPanelRunLoopMode，这个Mode貌似在iOS设备上没有，在Mac APP中使用的，过滤模态面板中处理的事件
+>--NSEventTrackingRunLoopMode，这个Mode就是我们平时在使用继承于UIScrollview的组件时，NSTimer出现暂停，就是因为这个Mode，它只管UIScrollview的滚动，其他事件一概不管，所以NSTimer就失效了。
+>--NSRunLoopCommonModes，一般来说我们使用NSTimer推荐使用这个Mode，他是一种组合模式，默认包含了NSDefaultRunLoopMode、NSModalPanelRunLoopMode、NSEventTrackingRunLoopMode这三个Mode
+
+>1、```+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)ti invocation:(NSInvocation *)invocation repeats:(BOOL)yesOrNo```这个方法依赖于NSInvocation和NSMethodSignature，使用方式如下：
+
+```
+__weak typeof(self) weakSelf = self;
+NSMethodSignature *sign = [NSMethodSignature signatureWithObjCTypes:"v@:"];
+NSInvocation *invaction = [NSInvocation invocationWithMethodSignature:sign];
+[invaction setTarget:weakSelf];
+ [invaction setSelector:@selector(action)];
+_timer = [NSTimer timerWithTimeInterval:1.0f invocation:invaction repeats:YES];
+[[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+```
+
+>2、```+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)ti invocation:(NSInvocation *)invocation repeats:(BOOL)yesOrNo;```这个方法实现必须依赖于RunLoop，否则定时器创建也无法启动任务。实例如下：
+
+```
+_timer = [NSTimer timerWithTimeInterval:1.0f target:self selector:@selector(action) userInfo:nil repeats:YES];
+[[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+```
+
+>3、```+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti invocation:(NSInvocation *)invocation repeats:(BOOL)yesOrNo```这个方法的实现也是依赖于NSInvocation和NSMethodSignature，使用方式如下：
+
+```
+__weak typeof(self) weakSelf = self;
+NSMethodSignature *sign = [NSMethodSignature signatureWithObjCTypes:"v@:"];
+NSInvocation *invaction = [NSInvocation invocationWithMethodSignature:sign];
+[invaction setTarget:weakSelf];
+[invaction setSelector:@selector(action)];
+_timer = [NSTimer scheduledTimerWithTimeInterval:1.0f invocation:invaction repeats:YES];
+```
+
+>4、```+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(nullable id)userInfo repeats:(BOOL)yesOrNo```这个方法的实现，在没有使用继承于UIScrollview的组件的页面使用，可以不用添加到RunLoop。实现如下：
+
+```
+_timer = [NSTimer scheduledTimerWithTimeInterval:1.0f target:self selector:@selector(action) userInfo:nil repeats:YES];
+```
+
+>5、```+ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *timer))block```这个方法是使用Block直接进行定时器方法回调，但是使用时必须依赖于RunLoop，实现如下：
+
+```
+__weak typeof(self) weakSelf = self;
+_timer = [NSTimer timerWithTimeInterval:1.0f repeats:YES block:^(NSTimer * _Nonnull timer) {
+     [weakSelf action];
+}];
+[[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+```
+
+>6、```+ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *timer))block```这个方法的实现，在没有使用继承于UIScrollview的组件的页面使用，可以不用添加到RunLoop。实现如下：
+
+```
+__weak typeof(self) weakSelf = self;
+_timer = [NSTimer scheduledTimerWithTimeInterval:1.0f repeats:YES block:^(NSTimer * _Nonnull timer) {
+    [weakSelf action];
+}];
+```
+
+>7、```- (instancetype)initWithFireDate:(NSDate *)date interval:(NSTimeInterval)ti target:(id)t selector:(SEL)s userInfo:(nullable id)ui repeats:(BOOL)rep```这个方法是一个对象方法，必须依赖于RunLoop，设置一个开始时间，当到达指定的时间后，启动定时器，实现如下：
+
+```
+_timer = [[NSTimer alloc] initWithFireDate:[NSDate now] interval:1.0f target:self selector:@selector(action) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+```
+
+>8、```- (instancetype)initWithFireDate:(NSDate *)date interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *timer))block```这个方法也是一个对象方法，必须依赖于RunLoop进行，设置一个开始时间，当到达指定的时间后，启动定时器，实现如下：
+
+```
+__weak typeof(self) weakSelf = self;
+_timer = [[NSTimer alloc] initWithFireDate:[NSDate now] interval:1.0f repeats:YES block:^(NSTimer * _Nonnull timer) {
+     [weakSelf action];
+}];
+[[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+```
+
+>以上就是系统NSTimer为我们提供的API，基本上能够满足日常业务需求，但是作为一个开发者，远远不会满足于此，所以我们用自己的方式对系统提供的NSTimer进行一些扩展，解决上述方法中使用时造成的ViewController无法正常释放问题。
+
+## 三、NSTimer扩展
+
+>如果我们要对NSTimer进行一个扩展，用我们想要的方式去创建调用，方法比较多。
+
+>1、（不推荐）我们可以创建一个继承于NSTimer的子类，在子类中进行方法重写
+
+>利弊：
+```
+好处：我们可以在方法重写的时候，做自己想做的事情，做一些其他的处理
+坏处：可能会发生未知的错误，导致无法排查
+```
+
+>2、（不推荐）我们可以创建一个继承于NSTimer的子类，在子类中使用Runtime进行方法替换
+
+>利弊
+```
+好处：我们可以在方法重写的时候，做自己想做的事情，做一些其他的处理
+坏处：可能会发生未知的错误，导致无法排查
+```
+
+>3、（不推荐）我们可以创建一个继承于NSTimer的子类，在子类中使用Runtime进行消息转发
+
+>利弊
+```
+好处：我们可以在方法重写的时候，做自己想做的事情，做一些其他的处理
+坏处：可能会发生未知的错误，导致无法排查
+```
+
+>4、（极力推荐）创建NSTimer的分类，在分类中添加方法以及方法实现
+
+>利弊
+```
+好处：1、在分类里面，我们添加方法以及方法实现，可以做自己想做的事情，添加处理逻辑。
+         2、不会引起异常奔溃和报错。
+         3、可以进行Hook
+```
+
+## 四、解决NSTimer引起的循环引用问题的方式
+
+>循环引用是iOS开发中经常遇到的问题，一不小心就出现了，主要引起循环引用的两个点NSTimer和Block，今天主角是NSTimer，所以我们一起看下，NSTimer怎么解决循环引用问题。
+
+>扩展：内存(RAM)分区，内存分为5个分区：
+
+>（1）、栈区：一般由编译器管理，存储局部变量、函数跳转时现场保护，这些系统为我们实现，不需要程序员去管理。
+>
+>（2）、堆区：一般由程序员管理，比如alloc申请内存，free释放内存。我们创建的对象也是存放在堆区的。
+>
+>（3）、全局区(静态区)：存储全局变量和静态变量，当程序结束运行时，系统自动释放。
+>
+>（4）、常量区：我们使用的一些常量字符串，还有const常量都是存放在这里。
+>
+>（5）、代码区：用来存放代码。
+
+>1、什么是循环引用？
+
+>在开发中，如果一个或多个对象和一个或多个对象相互之前强引用，那么当某个对象要释放时，等待其他对象发送释放消息，导致对象无法正常释放，系统无法及时回收对象所占用的内存空间。出现Crash或者内存占用过高导致卡顿。
+
+>2、NSTimer引起的循环引用解决方案：
+
+>（1）、使用__weak，如下形式:
+
+```
+__weak typeof(self) weakSelf = self;
+_timer = [[NSTimer alloc] initWithFireDate:[NSDate now] interval:1.0f repeats:YES block:^(NSTimer * _Nonnull timer) {
+    [weakSelf action];
+}];
+[[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
+```
+
+>（2）、使用NSProxy
+
+>首先创建一个继承与NSProxy的子类，然后在.h文件中声明一个id类型的属性```@property (nonatomic,weak) id target;```使用weak修饰，然后在.m文件中设置方法签名以及方法调用。
+
+```
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)sel{
+    return [self.target methodSignatureForSelector:sel];
+}
+
+- (void)forwardInvocation:(NSInvocation *)invocation{
+    [invocation invokeWithTarget:self.target];
+}
+```
+
+>调用示例：
+
+```
+- (void)funOne{
+    _proxy = [KGTimerProxy alloc];
+    _proxy.target = self;
+    _timer = [NSTimer scheduledTimerWithTimeInterval:1.0f target:_proxy selector:@selector(action) userInfo:nil repeats:YES];
+}
+
+- (void)action{
+    NSLog(@"11111");
+}
+```
+
+>（3）、对NSTimer进行Hook
+
+>首先创建一个NSTimer的分类，然后在.h文件中暴露自定义方法```+ (NSTimer *)kg_scheduledTimerWithTimeInterval:(NSTimeInterval)time repeats:(BOOL)yesOrNo block:(void (^)(NSTimer *timer))block```，没错就是在系统方法的基础上进行修改的，或许有人会问，直接用系统的就可以为啥还要自己写，这里先解释下，系统的NSTimer的Block回调方法是在10.0以后才出来的，只支持10.0以上的系统，但是如果你要适配10.0以下的系统，方法就找不到了，奔溃了，所以我们自己写一个，设配低版本和高版本的。实现也很简单，实例如下：
+
+```
++ (NSTimer *)kg_scheduledTimerWithTimeInterval:(NSTimeInterval)time repeats:(BOOL)yesOrNo block:(void (^)(NSTimer *timer))block{
+    return [self scheduledTimerWithTimeInterval:time target:self selector:@selector(free:) userInfo:block repeats:yesOrNo];
+}
+
+
++ (void)free:(NSTimer *)timer{
+    void(^block)(NSTimer *) = timer.userInfo;
+    if (block) {
+        block(timer);
+    }
+}
+```
+>调用示例如下：
+
+```
+- (void)action{
+    NSLog(@"11111");
+}
+
+- (void)funSenceds{
+    __weak typeof(self) weakSelf = self;
+    _timer = [NSTimer kg_scheduledTimerWithTimeInterval:1.0f repeats:YES block:^(NSTimer * _Nonnull timer) {
+        [weakSelf action];
+    }];
+}
+```
+
+到此就基本上NSTimer的API以及循环引用的问题基本解决了，今天的主题也就到此结束了。
