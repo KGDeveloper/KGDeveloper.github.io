@@ -146,6 +146,39 @@ KGPerson类的.m文件
 
 3、方法交换
 
->
+>对于这个黑魔法，我很喜欢，比如说大型项目，页面很多的时候，你刚去公司，让你开发新功能，让你在一个比较剩的页面改东西啥的，一堆代码里面扒页面很烦躁，所以你可以写一个方法，把系统API交换下，然后每次进入页面打印一下ViewController的名字，这样找起来轻松很多，所以接下来先来个简单的。
+
+>我们创建一个```KGViewController```继承于```ViewController```，然后在```KGViewController```里面写两个方法，如下：
+
+```
+- (void)run{
+    NSLog(@"哈哈哈哈");
+}
+
+- (void)eat{
+    NSLog(@"呵呵呵呵");
+}
+```
+
+>然后我们在```viewDidLoad```方法里面给它进行方法交换，如下所示：
+
+```
+Method m1 = class_getInstanceMethod([self class], @selector(run));
+Method m2 = class_getInstanceMethod([self class], @selector(eat));
+method_exchangeImplementations(m1,m2);
+```
+
+>当我们调用```run```方法的时候，就会走```eat```方法的实现。接下来一起看下这些方法的介绍.```Method _Nullable class_getInstanceMethod(Class _Nullable cls, SEL _Nonnull name)```返回指定类的实例方法，第一个参数就是给一个指定的类，第二个```SEL```很熟悉了，方法选择器，需要我们给定一个检索的方法选择器。```Method _Nullable class_getClassMethod(Class _Nullable cls, SEL _Nonnull name)```返回指定类的类方法，第一个参数就是给一个指定的类，第二个```SEL```很熟悉了，方法选择器，需要我们给定一个检索的方法选择器。这两个方法不能混淆了，要不然方法交换就出问题了。第一个是获取实例方法(-方法)，第二个是获取类方法(+方法)。```void method_exchangeImplementations(Method _Nonnull m1, Method _Nonnull m2)```进行方法交换，打开方法交换API介绍的时候，系统给了一个示例：
+
+```
+IMP imp1 = method_getImplementation(m1);
+IMP imp2 = method_getImplementation(m2);
+method_setImplementation(m1, imp2);
+method_setImplementation(m2, imp1);
+```
+
+>也是给我们解释下，方法交换的原理，其实就是更换方法的IMP即更换方法的函数指针。然后交换ViewController的方法，实现打印类名，就留作家庭作业吧，哈哈！！！！
 
 4、给类的扩展添加属性
+
+>首先来一道面试题：
