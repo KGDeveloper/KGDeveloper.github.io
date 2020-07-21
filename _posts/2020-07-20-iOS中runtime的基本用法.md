@@ -179,6 +179,73 @@ method_setImplementation(m2, imp1);
 
 >也是给我们解释下，方法交换的原理，其实就是更换方法的IMP即更换方法的函数指针。然后交换ViewController的方法，实现打印类名，就留作家庭作业吧，哈哈！！！！
 
-4、给类的扩展添加属性
+4、给类的分类添加属性
 
->首先来一道面试题：
+>首先来一道面试题：类的分类是否可以添加属性？
+
+>正常逻辑上来说，不能的，因为分类里面声明的属性，系统不会自动生成setter和getter方法。既然我们知道了系统不会自动为我们生成setter和getter方法，那么我们就手动去实现setter以及getter方法。正常来说我们实现setter以及getter方法是这么做的:
+
+```
+- (void)setUserInfo:(NSObject *)userInfo{
+    _userInfo = userInfo;
+}
+
+- (NSObject *)userInfo{
+    return _userInfo;
+}
+```
+
+>但是在分类中不行，因为系统没有为我们生成成员变量，而且页不允许我们在分类里面添加成员变量。所以，我就需要换种思路，利用runtime，接下来一起看下怎么实现setter以及getter方法。
+
+```
+#import "NSObject+KGObject.h"
+#import <objc/runtime.h>
+
+static NSString *key = @"UserInfoConstKey";
+
+@implementation NSObject (KGObject)
+
+- (void)setUserInfo:(NSObject *)userInfo{
+    objc_setAssociatedObject(self, &key, userInfo, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSObject *)userInfo{
+    return objc_getAssociatedObject(self, &key);
+}
+```
+
+>先来解读函数```void objc_setAssociatedObject(id _Nonnull object, const void * _Nonnull key,id _Nullable value, objc_AssociationPolicy policy)```文档解释：使用给定键和关联策略为给定对象设置关联值。即：使用我们指定的```key```（给定键）和属性声明修饰符```objc_AssociationPolicy```（关联策略），给指定的对象```object```设置关联值```value```，这个函数没有返回值。需要注意下，这块给定键需要的是一个```const void *```指针，所以我们先声明一个静态字符串key，取地址传入进去。```objc_AssociationPolicy```这个我们也一起看下，具体有哪些关联策略。
+
+```
+typedef OBJC_ENUM(uintptr_t, objc_AssociationPolicy) {
+    OBJC_ASSOCIATION_ASSIGN = 0,           /**< Specifies a weak reference to the associated object. */指定对关联对象的弱引用
+    OBJC_ASSOCIATION_RETAIN_NONATOMIC = 1, /**< Specifies a strong reference to the associated object. 指定对关联对象的强引用，关联不是原子化的
+                                            *   The association is not made atomically. */
+    OBJC_ASSOCIATION_COPY_NONATOMIC = 3,   /**< Specifies that the associated object is copied. 指定已复制关联对象，关联不是原子化的
+                                            *   The association is not made atomically. */
+    OBJC_ASSOCIATION_RETAIN = 01401,       /**< Specifies a strong reference to the associated object.指定对关联对象的强引用，关联是原子化的
+                                            *   The association is made atomically. */
+    OBJC_ASSOCIATION_COPY = 01403          /**< Specifies that the associated object is copied.指定已复制关联对象，关联是原子化的
+                                            *   The association is made atomically. */
+};
+```
+
+>上面这个枚举里面的原子化和原子化我们用property声明时的使用状态表示出来是这样:
+
+```
+/*OBJC_ASSOCIATION_RETAIN_NONATOMIC*/
+@property (nonatomic, strong)
+/*OBJC_ASSOCIATION_COPY_NONATOMIC*/
+@property (nonatomic, copy)
+
+/*OBJC_ASSOCIATION_RETAIN*/
+@property (atomic, strong)
+/*OBJC_ASSOCIATION_COPY*/
+@property (atomic, copy)
+```
+
+>接着来看取值函数```id _Nullable objc_getAssociatedObject(id _Nonnull object, const void * _Nonnull key)```文档解释：为给定键返回给定对象的关联值。即：使用我们给定的键```key```，从给定的对象```object```中取出我们想要的值，返回的是一个```id```类型。
+
+## 三、总结
+
+>在iOS开发中，如果去阅读那些优秀的三方库，runtime就是家长便饭一样，到处都有，但是使用runtime也需要看需求，具体还需要自己在实际开发中慢慢去总结。到此我的对于runtime的基本使用已经探索完成了，欢迎开发者一起探讨交流。QQ：969840184
