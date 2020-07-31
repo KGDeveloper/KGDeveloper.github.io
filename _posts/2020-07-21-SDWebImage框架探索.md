@@ -164,5 +164,32 @@ SDWebImageAvoidAutoSetImage                 //在图像下载完成后不是立�
 SDWebImageScaleDownLargeImages              //将图像缩小到与限制的大小一致进行解码
 SDWebImageQueryMemoryData                   //默认情况下如果缓存中存在对象，不会去查找映射对象，但是这个属性会强制去查找映射对象，而且是异步的
 SDWebImageQueryMemoryDataSync               //可以配置上面SDWebImageQueryMemoryData来实现同步查询
-SDWebImageQueryDiskDataSync                 //
+SDWebImageQueryDiskDataSync                 //默认情况当缓存丢失时，异步查找缓存磁盘，这个key用来强制同步查询
+SDWebImageFromCacheOnly                     //默认情况下，当缓存丢失时，图像将从加载器加载。此标志只能防止从缓存加载此文件。
+SDWebImageFromLoaderOnly                    //默认情况下，我们在从加载器加载图像之前查询缓存。此标志只能阻止从加载器加载
+SDWebImageForceTransition                   //此掩码还可以强制为内存和磁盘缓存应用视图转换
+SDWebImageAvoidDecodeImage                  //防止解码图像
+SDWebImageDecodeFirstFrameOnly              //对于动画强制解码第一帧并生成静态图像
+SDWebImagePreloadAllFrames                  //指定动画的所有帧预加载到内存中
+SDWebImageMatchAnimatedImageClass           //可以确保总是回调图像到提供的类
+SDWebImageWaitStoreCache                    //能够保存磁盘中缓存写入完成
+SDWebImageTransformVectorImage              //图片转换为矢量图像
 ```
+
+>如果option选项存在且缓存策略不是```SDWebImageDelayPlaceholder```，调用```- (void)sd_setImage:(UIImage *)image imageData:(NSData *)imageData basedOnClassOrViaCustomSetImageBlock:(SDSetImageBlock)setImageBlock transition:(SDWebImageTransition *)transition cacheType:(SDImageCacheType)cacheType imageURL:(NSURL *)imageURL```方法，加载占位图。注意这块有一个重点，之前SDWebImage判断是否是主线程使用的```[NSThread isMainThread]```但是现在换成了```dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())```，主要是因为```[NSThread isMainThread]```的判断不安全，看以下代码就明白了：
+
+```
+dispatch_sync(dispatch_queue_create("com.bszhi.teacher.app", nil), ^{
+    if ([NSThread isMainThread]) {
+        NSLog(@"当前是在主线程--[NSThread isMainThread]");
+    }
+    
+    if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) {
+        NSLog(@"当前是在主线程");
+    }
+});
+```
+
+>知识点：打印结果为```当前是在主线程--[NSThread isMainThread]```，从结果可以看出使用```[NSThread isMainThread]```判断的时候返回的是在主线程，但是使用```dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())```判断，返回的不是主线程。
+
+>然后判断URL是否合法，如果url存在，然后获取下载进度NSProgress，因为前面步骤进来后先根据URL取消当前下载的任务，所以在这里获取判断下，如果存在，给它重置下载进度，里面就两个值一个需要下载的总大小以及已经下载完成的大小。然后检查并启动下载指示器，
