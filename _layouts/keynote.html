@@ -59,67 +59,7 @@ layout: default
     <div class="container">
         <div class="row">
 
-            <!-- Post Container -->
-            <div class="post-container
-                col-lg-8 col-lg-offset-2
-                col-md-10 col-md-offset-1 ">
-
-				{{ content }}
-
-                <hr style="visibility: hidden;">
-
-
-                <ul class="pager">
-                    {% if page.previous.url %}
-                    <li class="previous">
-                        <a href="{{ page.previous.url | prepend: site.baseurl | replace: '//', '/' }}" data-toggle="tooltip" data-placement="top" title="{{page.previous.title}}">
-                        Previous<br>
-                        <span>{{page.previous.title}}</span>
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if page.next.url %}
-                    <li class="next">
-                        <a href="{{ page.next.url | prepend: site.baseurl | replace: '//', '/' }}" data-toggle="tooltip" data-placement="top" title="{{page.next.title}}">
-                        Next<br>
-                        <span>{{page.next.title}}</span>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-
-                <!-- Gitalk 评论 start  -->
-                {% if site.gitalk.enable %}
-                <!-- Gitalk link  -->
-                <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
-                <script src="https://unpkg.com/gitalk@latest/dist/gitalk.min.js"></script>
-
-                <div id="gitalk-container"></div>
-                    <script type="text/javascript">
-                    var gitalk = new Gitalk({
-                    clientID: '2de60123e5e058e1d7a0',
-                    clientSecret: '9b8e50a4a6eb22fd8b30cbb518a6ee66e28b151f',
-                    repo: 'https://github.com/KGDeveloper/KGDeveloper.github.io.git',
-                    owner: 'myloveqzk@163.com',
-                    admin: ['myloveqzk@163.com'],
-                    id: window.location.pathname,
-                    });
-                    gitalk.render('gitalk-container');
-                </script>
-                {% endif %}
-                <!-- Gitalk end -->
-
-                {% if site.disqus.enable %}
-                <!-- disqus 评论框 start -->
-                <div class="comment">
-                    <div id="disqus_thread" class="disqus-thread">
-
-                    </div>
-                </div>
-                <!-- disqus 评论框 end -->
-                {% endif %}
-
-            </div>
+           
 
             <!-- Sidebar Container -->
             <div class="sidebar-container
