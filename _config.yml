@@ -86,6 +86,9 @@ service-worker: true
 # Friends
 friends: [
     {
+        title: "KG丿夏沫(掘金)",
+        href: "https://juejin.cn/user/430664724781693/posts"
+    },{
         title: "KG丿夏沫(GitHub)",
         href: "https://github.com/KGDeveloper"
     },{
